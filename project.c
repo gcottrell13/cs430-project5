@@ -12,6 +12,11 @@
 
 #include "deps/linmath.h"
 
+#include "imageread.c"
+
+#define pi 3.141592653589793238462643383279502
+#define ANIMATION_LENGTH 1
+
 typedef struct {
   float Position[2];
   float TexCoord[2];
@@ -28,6 +33,36 @@ Vertex vertexes[] = {
 	{{1, -1}, {0.9999, 0.9999}},
 	{{-1, 1}, {0, 0}}
 };
+
+float rotation = 0;
+float animate_rotation_to = 0;
+float animate_rotation_start_val = 0;
+float animate_rotation_start_time = 0;
+float animate_rotation_end_time = 0;
+
+float scale = 1;
+float animate_scale_to = 1;
+float animate_scale_start_val = 0;
+float animate_scale_start_time = 0;
+float animate_scale_end_time = 0;
+
+float x_pos = 0;
+float animate_x_pos_to = 0;
+float animate_x_pos_start_val = 0;
+float animate_x_pos_start_time = 0;
+float animate_x_pos_end_time = 0;
+
+float y_pos = 0;
+float animate_y_pos_to = 0;
+float animate_y_pos_start_val = 0;
+float animate_y_pos_start_time = 0;
+float animate_y_pos_end_time = 0;
+
+float shear = 0;
+float animate_shear_to = 0;
+float animate_shear_start_val = 0;
+float animate_shear_start_time = 0;
+float animate_shear_end_time = 0;
 
 static const char* vertex_shader_text =
 "uniform mat4 MVP;\n"
@@ -60,6 +95,80 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 		if (key == GLFW_KEY_ESCAPE)
 			glfwSetWindowShouldClose(window, 1);
 		
+		float now = (float) glfwGetTime();
+		if(key == GLFW_KEY_A && now > animate_x_pos_end_time)
+		{
+			animate_x_pos_to -= 0.5;
+			animate_x_pos_start_val = x_pos;
+			animate_x_pos_start_time = now;
+			animate_x_pos_end_time = now + ANIMATION_LENGTH;
+		}
+		if(key == GLFW_KEY_D && now > animate_x_pos_end_time)
+		{
+			animate_x_pos_to += 0.5;
+			animate_x_pos_start_val = x_pos;
+			animate_x_pos_start_time = now;
+			animate_x_pos_end_time = now + ANIMATION_LENGTH;
+		}
+		if(key == GLFW_KEY_S && now > animate_y_pos_end_time)
+		{
+			animate_y_pos_to -= 0.5;
+			animate_y_pos_start_val = y_pos;
+			animate_y_pos_start_time = now;
+			animate_y_pos_end_time = now + ANIMATION_LENGTH;
+		}
+		if(key == GLFW_KEY_W && now > animate_y_pos_end_time)
+		{
+			animate_y_pos_to += 0.5;
+			animate_y_pos_start_val = y_pos;
+			animate_y_pos_start_time = now;
+			animate_y_pos_end_time = now + ANIMATION_LENGTH;
+		}
+		
+		if(key == GLFW_KEY_Q && now > animate_rotation_end_time)
+		{
+			animate_rotation_to += pi / 3;
+			animate_rotation_start_val = rotation;
+			animate_rotation_start_time = now;
+			animate_rotation_end_time = now + ANIMATION_LENGTH;
+		}
+		if(key == GLFW_KEY_E && now > animate_rotation_end_time)
+		{
+			animate_rotation_to -= pi / 3;
+			animate_rotation_start_val = rotation;
+			animate_rotation_start_time = now;
+			animate_rotation_end_time = now + ANIMATION_LENGTH;
+		}
+		
+		if(key == GLFW_KEY_R && now > animate_scale_end_time)
+		{
+			animate_scale_to *= 2;
+			animate_scale_start_val = scale;
+			animate_scale_start_time = now;
+			animate_scale_end_time = now + ANIMATION_LENGTH;
+		}
+		if(key == GLFW_KEY_F && now > animate_scale_end_time)
+		{
+			animate_scale_to *= 0.5;
+			animate_scale_start_val = scale;
+			animate_scale_start_time = now;
+			animate_scale_end_time = now + ANIMATION_LENGTH;
+		}
+		
+		if(key == GLFW_KEY_X && now > animate_shear_end_time)
+		{
+			animate_shear_to += 1;
+			animate_shear_start_val = shear;
+			animate_shear_start_time = now;
+			animate_shear_end_time = now + ANIMATION_LENGTH;
+		}
+		if(key == GLFW_KEY_Z && now > animate_shear_end_time)
+		{
+			animate_shear_to -= 1;
+			animate_shear_start_val = shear;
+			animate_shear_start_time = now;
+			animate_shear_end_time = now + ANIMATION_LENGTH;
+		}
 	}
 }
 
@@ -205,9 +314,24 @@ int main(int argc, char** argv)
         glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT);
 		
+		float now = (float) glfwGetTime();
+		if(now < animate_x_pos_end_time)
+			x_pos = calculate_animation(animate_x_pos_start_val, animate_x_pos_to, animate_x_pos_start_time, animate_x_pos_end_time);
+		if(now < animate_y_pos_end_time)
+			y_pos = calculate_animation(animate_y_pos_start_val, animate_y_pos_to, animate_y_pos_start_time, animate_y_pos_end_time);
+		if(now < animate_rotation_end_time)
+			rotation = calculate_animation(animate_rotation_start_val, animate_rotation_to, animate_rotation_start_time, animate_rotation_end_time);
+		if(now < animate_scale_end_time)
+			scale = calculate_animation(animate_scale_start_val, animate_scale_to, animate_scale_start_time, animate_scale_end_time);
+		if(now < animate_shear_end_time)
+			shear = calculate_animation(animate_shear_start_val, animate_shear_to, animate_shear_start_time, animate_shear_end_time);
 		
         mat4x4_identity(m);
         mat4x4_ortho(p, -ratio, ratio, -1.f, 1.f, 1.f, -1.f);
+		mat4x4_translate_in_place(m, x_pos, y_pos, 0);
+		mat4x4_linear_scale(m, scale, scale, 1);
+		mat4x4_linear_shear_xy(m, 0, shear);
+        mat4x4_rotate_Z(m, m, rotation);
         mat4x4_mul(mvp, p, m);
 		
         glUseProgram(program);
