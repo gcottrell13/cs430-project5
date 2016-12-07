@@ -45,3 +45,23 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+*.dll
+*.obj
+*.pdb
+*.exp
+*.lib
+*.exe
+EGL
+GLES2
+GLFW
+KHR
+platform
+deps/getopt.c
+deps/vulkan
+deps/mingw
+deps/glad
+deps/getopt.h
+deps/glad.c
+deps/tinycthread.*
+output20x20.ppm
+glsl_Tex
